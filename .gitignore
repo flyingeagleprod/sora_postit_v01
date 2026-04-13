@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environments
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+
+# Local browser/session data
+browser-profile/
+chrome-debug-sora/
+
+# Runtime output and private local data
+logs/
+state/
+prompt_archive.json
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
