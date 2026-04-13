@@ -518,6 +518,7 @@ class SoraPoster:
         self.logger.info(f"Opening draft {full_draft_url}.")
         draft_tile.locator.click()
         self.wait_for_draft_detail(page, full_draft_url)
+        self.ensure_draft_ready_for_edit(page, full_draft_url)
 
         if self.keep_existing_title:
             original_title, used_title, used_number = self.keep_current_title(page, requested_number)
@@ -1247,6 +1248,57 @@ class SoraPoster:
         if not page.url.startswith(expected_url):
             self.logger.info(f"Detail page URL is {page.url}.")
         self.logger.ok(f"Loaded draft detail page {page.url}.")
+
+    def ensure_draft_ready_for_edit(self, page: Page, draft_url: str) -> None:
+        if self.has_visible_prompt_edit_icon(page):
+            return
+
+        self.logger.warn(
+            "Draft detail loaded without the prompt pencil icon. Waiting briefly to see if Sora finishes rendering."
+        )
+        page.wait_for_timeout(1_500)
+        if self.has_visible_prompt_edit_icon(page):
+            self.logger.ok("Draft detail finished rendering after a short wait.")
+            return
+
+        for attempt in range(1, 3):
+            if self.is_draft_loading_state(page):
+                self.logger.warn(
+                    f"Draft detail still looks stuck on a loading state. Refreshing the draft page (attempt {attempt}/2)."
+                )
+            else:
+                self.logger.warn(
+                    f"Draft detail still does not expose the prompt pencil icon. Reopening the same draft (attempt {attempt}/2)."
+                )
+
+            try:
+                page.goto(draft_url, wait_until="domcontentloaded")
+            except PlaywrightError:
+                page.wait_for_timeout(1_000)
+                continue
+
+            page.wait_for_timeout(1_500)
+            self.wait_for_draft_detail(page, draft_url)
+            if self.has_visible_prompt_edit_icon(page):
+                self.logger.ok("Recovered the draft detail page and found the prompt pencil icon.")
+                return
+
+        raise RuntimeError(
+            "The draft detail page loaded, but the prompt pencil icon never appeared after retrying the draft."
+        )
+
+    def has_visible_prompt_edit_icon(self, page: Page) -> bool:
+        try:
+            self.find_icon_button(page, path_fragment="M16.585 11l-3.586-3.585-5.843 5.842")
+            return True
+        except RuntimeError:
+            return False
+
+    def is_draft_loading_state(self, page: Page) -> bool:
+        try:
+            return page.locator(".spin_loader").count() > 0 and page.locator(".spin_loader").first.is_visible()
+        except PlaywrightError:
+            return False
 
     def rename_current_draft(self, page: Page, requested_number: int) -> tuple[str, str, int]:
         edit_button = self.find_icon_button(
