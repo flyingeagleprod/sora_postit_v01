@@ -2,6 +2,14 @@
 
 Cross-platform `Python + Playwright` automation for overwriting Sora draft prompt text with numbered names and posting through your own authorized browser session.
 
+This tool is built for people who want to work through a large Sora Drafts backlog with less clicking and less guesswork. It can walk the Drafts queue from the bottom up, overwrite each draft's editable prompt text with a clean numbered name such as `draft_000125`, post drafts in sequence, and keep going while remembering skipped draft URLs and checkpoint progress.
+
+Before each prompt field is overwritten, the original full prompt text is appended to `prompt_archive.json` along with the replacement text and the stable draft ID from the draft URL. That gives you a simple running backup of the prompts that produced each video while the automation is renaming and posting.
+
+That is especially useful if your real goal is to get everything posted so it can be downloaded more consistently afterward. In practice, some downstream download workflows, including ones people use to get cleaner copies of posted videos, tend to work better from published posts than from the raw Drafts queue.
+
+**⚠️ Funny but real warning: this can surface all kinds of forgotten experiments. Get ready for your followers to see your best bloopers and weird drafts. You may want to audit the truly wild ones first if you would rather avoid surprise embarrassment.**
+
 ## Windows Quick Start
 
 If you are on Windows, open `PowerShell` and paste this exactly:
