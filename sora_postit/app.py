@@ -51,6 +51,10 @@ SKIPPABLE_POST_PATTERNS = (
 )
 
 
+class DraftsDepletedError(RuntimeError):
+    """Raised when no remaining unprocessed draft tile can be found."""
+
+
 def now_stamp() -> str:
     return datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z")
 
@@ -413,6 +417,12 @@ class SoraPoster:
                     self.logger.info(f"Processing title {target_title}.")
                     try:
                         process_result = self.process_one(page, number)
+                    except DraftsDepletedError:
+                        self.attempted -= 1
+                        self.logger.ok(
+                            "No remaining unprocessed draft tiles were found. Ending the run cleanly."
+                        )
+                        break
                     except Exception as exc:
                         self.failed += 1
                         self.handle_failure(page, target_title, exc)
@@ -1004,7 +1014,7 @@ class SoraPoster:
             page.mouse.wheel(0, -3_000)
             page.wait_for_timeout(600)
 
-        raise RuntimeError("No unprocessed draft tile was found on the drafts page.")
+        raise DraftsDepletedError("No unprocessed draft tile was found on the drafts page.")
 
     def open_drafts_page(self, page: Page) -> None:
         if "/drafts" not in page.url:
